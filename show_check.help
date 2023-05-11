@@ -1,0 +1,23 @@
+Create and/or select a file containing the optional show configuration commands or commands to look for in the running configuration.
+
+You can combine both show and check commands in the same file.
+
+Example Show (;; SHOW ;; MUST be included):
+
+;; SHOW ;;
+show ip int brief
+show running-config
+show interface Vlan 1
+etc.
+
+Example Check (;; CHECK ;; MUST be included):
+;; CHECK ;;
+switchport access vlan 2
+description UPLINK
+ip scp server enable
+etc.
+
+NOTE:
+Each command must be followed by a new line. The program will automatically insert 'terminal length 0' before executing commands.
+
+Lines starting with # or ! will be ignored.

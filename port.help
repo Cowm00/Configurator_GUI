@@ -1,0 +1,45 @@
+Create and/or select a file containing the optional port configuration commands.
+
+WARNING: ALL PHYSICAL PORTS WILL BE CONFIGURED UNLESS YOU INCLUDE OR EXCLUDE SPECIFIC INTERFACES OR COMMANDS UNDER AN INTERFACE
+
+The interface list is gathered using 'show running-config'. It will include any interface and its configuration starting with:
+'interface G' or 'interface F' or 'interface T' or 'interface H'
+
+;; INCLUDE ;; - Ports or configurations to include from the interface list
+;; EXCLUDE ;; - Ports or configurations to exclude from the interface list
+;; CONFIG ;; - The actual port configuration to apply to the interface list (Required)
+;; default ;; - Will default an interface, you can use this to reset an interface before adding configurations. It can only be used under ;;CONFIG;;.
+
+If neither ';; INCLUDE ;;' or ';; EXCLUDE ;;' or both are used, then all configurations under ';; CONFIG ;;' will be applied to all interfaces.
+
+;; CONFIG ;; is required. If it's not present, no configuration will be applied.
+
+The ';; INCLUDE ;;' and ';; EXCLUDE ;;' filters are applied in the order they are entered in the file. In the below example all GigabitEthernet are included and then any exclusions will be applied on the included interfaces.
+So if any interfaces with GigabitEthernet in the name included has 'switchport mode trunk' in the configuration they will be excluded.
+
+Example:
+;; INCLUDE ;;
+GigabitEthernet (includes any interface with GigabitEthernet in the interface name)
+etc.
+
+;; EXCLUDE ;;
+switchport mode trunk (Will exclude any interface that has 'switchport mode trunk' in the interface configuration)
+uplink (Will exclude any interface that has 'uplink' in the interface configuration, for instance, the description)
+etc.
+
+;; CONFIG ;;
+;; default ;; (Will remove any existing configuration first)
+description USER ACCESS
+switchport access vlan 801
+switchport mode access
+switchport voice vlan 802
+spanning-tree portfast
+no shutdown
+etc.
+
+NOTE:
+Each command must be followed by a new line. The program will automatically execute 'configure terminal' and enter interface commands before entering the configuration.
+
+It's probably easier to exclude the interfaces you don't want configured vs including the ones you want configured.
+
+Lines starting with # or ! will be ignored.

@@ -1,0 +1,6 @@
+This program was developed by Rune Johannesen 2021-2023.
+
+The main purpose is to easily configure or check Cisco devices in bulk. It will log into an unlimited amount of devices and execute commands based on the input by the user. Results will be both saved and showed in the GUI.
+
+LinkedIn: https://www.linkedin.com/in/rune-johannesen/
+Github: https://github.com/Cowm00

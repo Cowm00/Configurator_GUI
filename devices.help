@@ -1,0 +1,13 @@
+Create and/or select a file containing the devices you want to execute the program on.
+
+Example:
+
+1.1.1.1
+1.1.1.2
+1.1.1.3
+etc.
+
+NOTE:
+Each device must be followed by a new line.
+
+Only IPv4 addresses will be accepted.

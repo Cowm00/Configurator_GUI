@@ -1,0 +1,15 @@
+Create and/or select a file containing the optional global configuration commands.
+
+You can also use this for interface specific commands, like creating Vlans or Loopback interfaces etc. But be careful as all devices will get the same configuration.
+
+Example:
+hostname test
+spanning-tree mode rapid-pvst
+vtp mode transparent
+ip routing
+etc.
+
+NOTE:
+Each command must be followed by a new line. The program will automatically execute 'configure terminal' before entering commands.
+
+Lines starting with # or ! will be ignored.

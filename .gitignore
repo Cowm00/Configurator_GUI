@@ -1,0 +1,6 @@
+*/
+!Configuration Templates/
+.env
+.venv
+pyvenv*
+*.bak

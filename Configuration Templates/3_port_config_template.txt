@@ -1,0 +1,15 @@
+# Enter text to look for under an interface to include it in the config.
+# Example: GigabitEthernet (Includes any interface with GigabitEthernet in the interface name) 
+;; INCLUDE ;;
+
+# Enter text to look for under an interface to exclude it from the config.
+# Example: switchport mode trunk (Excludes any interface that has 'switchport mode trunk' in the interface configuration)
+;; EXCLUDE ;;
+
+# The actual port configurations goes here.
+# Example: description USER ACCESS
+;; CONFIG ;;
+# Use this command to default an interface and remove all configurations from it before executing the config commands. Uncomment, remove #, to use it.
+#;; default ;;
+
+# NOTE: Remember to press enter (new line) after each command.

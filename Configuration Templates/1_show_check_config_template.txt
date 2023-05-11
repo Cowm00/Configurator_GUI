@@ -1,0 +1,9 @@
+# Enter show commands you want to execute on your devices. Results will be saved to individual files with the results.
+# Example: show ip int brief (Returns an overview of IP addresses per interface)
+;; SHOW ;;
+
+# Enter commands to check if they exist in the running-config of the devices.
+# Example: ip scp server enable (Returns a csv per command that shows if the command exist on the device)
+;; CHECK ;;
+
+# NOTE: Remember to press enter (new line) after each command.

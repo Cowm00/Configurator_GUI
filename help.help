@@ -1,0 +1,21 @@
+At a minimum you MUST select devices and enter credentials for this program to work correctly.
+
+With devices and credentials you are able to click the 'Save device configurations' button and start execution. This will log into all devices and execute 'write memory' to save the current config.
+
+Show, Global and Port configurations are optional and they have their own help descriptions.
+
+'Reset Options' button will remove any configured and selected files in the menu. It will not remove any data in the 'Show Config', 'Check Config', 'Device Config' and 'Save Config' panes.
+
+'Start Execution' will start a task of either saving, showing, checking, global or port configurations. You can combine any of the options or use all at once.
+
+The 'Show Config', 'Check Config', 'Device Config' and 'Save Config' panes show the results of each task execution.
+
+All data is saved in the directory where the program itself resides. These are the folders:
+
+__pycache__ <> Compiled python code, ignore.
+CHECK_CONFIGURATIONS <> Will contain all executed check commands per device in txt format.
+CONFIGURATOR_OBJECT_LOG <> Contains log files from executing commands on the devices.
+DEVICE_CONFIGURATIONS <> Will contain the actual device configurations uploaded to the device and copied to running-config. Will also save a backup of the current running-config before execution.
+SHOW_CONFIGURATIONS <> Will contain all executed show commands per device in txt format.
+
+NOTE: No files will be deleted automatically.

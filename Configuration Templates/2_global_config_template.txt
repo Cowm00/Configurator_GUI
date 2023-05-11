@@ -1,0 +1,2 @@
+# Enter commands to execute in global config. Any command can be entered, including interface commands.
+# NOTE: Remember to press enter (new line) after each command.
