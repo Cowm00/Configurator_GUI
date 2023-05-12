@@ -5,7 +5,7 @@ from ttkbootstrap.constants import *
 from tkinter.filedialog import askopenfilename
 from PIL import Image, ImageTk
 from os.path import splitext, basename, dirname, realpath, join, exists
-from os import getcwd, chdir, mkdir, startfile
+from os import getcwd, chdir, mkdir
 from subprocess import Popen
 from threading import Thread
 from Configurator_Object import Configurator
@@ -89,6 +89,7 @@ class Main(ttk.Frame):
 
 	def open_file(self, path: str) -> None:
 		if platform.startswith('win'):
+			from os import startfile
 			startfile(path)
 		else:
 			opener = "open" if platform == "darwin" else "xdg-open"
