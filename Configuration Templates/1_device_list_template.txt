@@ -1,0 +1,4 @@
+# Enter a list of device IP addresses to check and/or configure.
+# Example: 1.2.3.4
+
+# NOTE: Remember to press enter (new line) after each command.

@@ -44,8 +44,10 @@ class Main(ttk.Frame):
 			mkdir(self.check_config_dir)
 		if not exists(self.device_config_dir):
 			mkdir(self.device_config_dir)
-		self.txt_file_icon: str = ImageTk.PhotoImage(Image.open(join(self.current_dir, "txt-file-icon.png")).resize((15,15), Image.ANTIALIAS))
-		self.folder_file_icon: str = ImageTk.PhotoImage(Image.open(join(self.current_dir, "folder-open-icon.png")).resize((15,15), Image.ANTIALIAS))
+		self.txt_file_icon: ImageTk.PhotoImage = ImageTk.PhotoImage(Image.open(join(self.current_dir, "txt-file-icon.png")).resize((15,15), Image.ANTIALIAS))
+		self.folder_file_icon: ImageTk.PhotoImage = ImageTk.PhotoImage(Image.open(join(self.current_dir, "folder-open-icon.png")).resize((15,15), Image.ANTIALIAS))
+		self.reload_file_icon: ImageTk.PhotoImage = ImageTk.PhotoImage(Image.open(join(self.current_dir, "reload-file-icon.png")).resize((20,20), Image.ANTIALIAS))
+		self.preview_folder: ImageTk.PhotoImage = ImageTk.PhotoImage(Image.open(join(self.current_dir, "folder-open-icon.png")).resize((20,20), Image.ANTIALIAS))
 		self.device_help: str = "devices.help"
 		self.show_check_help: str = "show_check.help"
 		self.global_config_help: str = "global_config.help"
@@ -95,8 +97,16 @@ class Main(ttk.Frame):
 			opener = "open" if platform == "darwin" else "xdg-open"
 			Popen([opener, path])
 
-	def open_devices(self) -> None:
-		path: str = askopenfilename(title='Select Device list')
+	def open_devices(self, reload: bool = False) -> None:
+		if reload and ("\\" in self.device_path.get() or "/" in self.device_path.get()):
+			path: str = self.device_path.get()
+			if (self.device_reload_counter.get() % 2) == 0:
+				self.menu_device_reload.config(bootstyle='success')
+			else: self.menu_device_reload.config(bootstyle='info')
+			self.device_reload_counter.set(self.device_reload_counter.get()+1)
+		else:
+			path: str = askopenfilename(title='Select Device list')
+			self.menu_device_reload.config(bootstyle='secondary')
 		if path:
 			self.devices: list = []
 			with open(path) as r:
@@ -108,10 +118,14 @@ class Main(ttk.Frame):
 					self.menu_device2.config(foreground="lime")
 					self.device_total.set(f"Total devices: {len(self.devices)}")
 					self.menu_check_btn.config(state='normal')
+					self.menu_device_reload.config(state='normal')
+					self.menu_device_preview.config(state='normal')
 				else:
 					path_file = path.split("/")[-1]
 					self.device_path.set(f"No devices found in file: {path_file}")
 					self.device_preview.set(f"No devices found in file: {path_file}")
+					self.menu_device_reload.config(state='disabled', bootstyle='secondary')
+					self.menu_device_preview.config(state='disabled')
 					self.menu_device1.config(foreground='orange')
 					self.menu_device2.config(foreground="orange")
 		else:
@@ -119,11 +133,21 @@ class Main(ttk.Frame):
 				self.device_path.set("No device file selected yet.")
 				self.device_preview.set("No device file selected yet.")
 				self.device_total.set("Total devices: 0")
+				self.menu_device_reload.config(state='disabled', bootstyle='secondary')
+				self.menu_device_preview.config(state='disabled')
 				self.menu_device1.config(foreground='')
 				self.menu_device2.config(foreground='')
 
-	def open_show_check(self) -> None:
-		path: str = askopenfilename(title='Select Show/Check Commands list')
+	def open_show_check(self, reload: bool = False) -> None:
+		if reload and ("\\" in self.show_check_path.get() or "/" in self.show_check_path.get()):
+			path: str = self.show_check_path.get()
+			if (self.show_reload_counter.get() % 2) == 0:
+				self.menu_show_reload.config(bootstyle='success')
+			else: self.menu_show_reload.config(bootstyle='info')
+			self.show_reload_counter.set(self.show_reload_counter.get()+1)
+		else:
+			path: str = askopenfilename(title='Select Show/Check Commands list')
+			self.menu_show_reload.config(bootstyle='secondary')
 		if path:
 			self.show_cmd: list = []
 			self.check_cmd: list = []
@@ -159,17 +183,40 @@ class Main(ttk.Frame):
 				if self.show_cmd: self.show_cmd = ["terminal length 0"]+self.show_cmd
 				self.show_check_path.set(path)
 				self.menu_show.config(foreground='lime')
+				self.menu_show_text.set("Task Enabled.")
+				self.menu_show_btn.config(state='normal')
+				self.menu_show_reload.config(state='normal')
+				self.menu_show_preview.config(state='normal')
+				self.menu_show_config.set(1)
 			else:
 				path_file = path.split("/")[-1]
 				self.show_check_path.set(f"No Show/Check commands (;; SHOW ;; or ;; CHECK ;;) found in file: {path_file}")
 				self.menu_show.config(foreground='orange')
+				self.menu_show_text.set("Task Disabled.")
+				self.menu_show_btn.config(state='disabled')
+				self.menu_show_reload.config(state='disabled', bootstyle='secondary')
+				self.menu_show_preview.config(state='disabled')
+				self.menu_show_config.set(0)
 		else:
 			if not "\\" in self.show_check_path.get() and not "/" in self.show_check_path.get():
 				self.show_check_path.set("No Show/Check commands file selected yet.")
+				self.menu_show_text.set("Task Disabled.")
+				self.menu_show_btn.config(state='disabled')
+				self.menu_show_reload.config(state='disabled', bootstyle='secondary')
+				self.menu_show_preview.config(state='disabled')
+				self.menu_show_config.set(0)
 				self.menu_show.config(foreground='')
 
-	def open_global(self) -> None:
-		path: str = askopenfilename(title='Select Global Configuration list')
+	def open_global(self, reload: bool = False) -> None:
+		if reload and ("\\" in self.global_path.get() or "/" in self.global_path.get()):
+			path: str = self.global_path.get()
+			if (self.global_reload_counter.get() % 2) == 0:
+				self.menu_global_reload.config(bootstyle='success')
+			else: self.menu_global_reload.config(bootstyle='info')
+			self.global_reload_counter.set(self.global_reload_counter.get()+1)
+		else:
+			path: str = askopenfilename(title='Select Global Configuration list')
+			self.menu_global_reload.config(bootstyle='secondary')
 		if path:
 			self.global_config: list = []
 			with open(path) as r:
@@ -178,17 +225,40 @@ class Main(ttk.Frame):
 				self.menu_check_config.set(1)
 				self.global_path.set(path)
 				self.menu_global.config(foreground='lime')
+				self.menu_global_text.set("Task Enabled.")
+				self.menu_global_btn.config(state='normal')
+				self.menu_global_reload.config(state='normal')
+				self.menu_global_preview.config(state='normal')
+				self.menu_global_config.set(1)
 			else:
 				path_file = path.split("/")[-1]
 				self.global_path.set(f"No Global Configurations found in file: {path_file}")
+				self.menu_global_text.set("Task Disabled.")
+				self.menu_global_btn.config(state='disabled')
+				self.menu_global_reload.config(state='disabled', bootstyle='secondary')
+				self.menu_global_preview.config(state='disabled')
+				self.menu_global_config.set(0)
 				self.menu_global.config(foreground='orange')
 		else:
 			if not "\\" in self.global_path.get() and not "/" in self.global_path.get():
 				self.global_path.set("No Global configuration file selected yet.")
+				self.menu_global_text.set("Task Disabled.")
+				self.menu_global_btn.config(state='disabled')
+				self.menu_global_reload.config(state='disabled', bootstyle='secondary')
+				self.menu_global_preview.config(state='disabled')
+				self.menu_global_config.set(0)
 				self.menu_global.config(foreground='')
 
-	def open_port(self) -> None:
-		path: str = askopenfilename(title='Select Port Configuration list')
+	def open_port(self, reload: bool = False) -> None:
+		if reload and ("\\" in self.port_path.get() or "/" in self.port_path.get()):
+			path: str = self.port_path.get()
+			if (self.port_reload_counter.get() % 2) == 0:
+				self.menu_port_reload.config(bootstyle='success')
+			else: self.menu_port_reload.config(bootstyle='info')
+			self.port_reload_counter.set(self.port_reload_counter.get()+1)
+		else:
+			path: str = askopenfilename(title='Select Port Configuration list')
+			self.menu_port_reload.config(bootstyle='secondary')
 		if path:
 			self.port_config: list = []
 			self.port_include: list = []
@@ -197,6 +267,11 @@ class Main(ttk.Frame):
 				if not ";; config ;;" in r.read().lower():
 					path_file = path.split("/")[-1]
 					self.port_path.set(f"No Port Configuration commands (;; CONFIG ;;) found in file: {path_file}")
+					self.menu_port_text.set("Task Disabled.")
+					self.menu_port_btn.config(state='disabled')
+					self.menu_port_reload.config(state='disabled', bootstyle='secondary')
+					self.menu_port_preview.config(state='disabled')
+					self.menu_port_config.set(0)
 					self.menu_port.config(foreground="orange")
 					return
 				else:
@@ -244,12 +319,27 @@ class Main(ttk.Frame):
 				self.menu_check_config.set(1)
 				self.port_path.set(path)
 				self.menu_port.config(foreground="lime")
+				self.menu_port_text.set("Task Enabled.")
+				self.menu_port_btn.config(state='normal')
+				self.menu_port_reload.config(state='normal')
+				self.menu_port_preview.config(state='normal')
+				self.menu_port_config.set(1)
 			else:
 				path_file = path.split("/")[-1]
 				self.port_path.set(f"No Port Configuration commands found in file: {path_file}")
+				self.menu_port_text.set("Task Disabled.")
+				self.menu_port_btn.config(state='disabled')
+				self.menu_port_reload.config(state='disabled', bootstyle='secondary')
+				self.menu_port_preview.config(state='disabled')
+				self.menu_port_config.set(0)
 				self.menu_port.config(foreground="orange")
 		else:
 			if not "\\" in self.port_path.get() and not "/" in self.port_path.get():
+				self.menu_port_text.set("Task Disabled.")
+				self.menu_port_btn.config(state='disabled')
+				self.menu_port_reload.config(state='disabled', bootstyle='secondary')
+				self.menu_port_preview.config(state='disabled')
+				self.menu_port_config.set(0)
 				self.port_path.set("No Port configuration file selected yet.")
 
 	def reset_menu(self) -> None:
@@ -264,6 +354,19 @@ class Main(ttk.Frame):
 		self.show_cmd: list = []
 		self.check_cmd: list = []
 		self.show_check_path.set("No Show/Check commands file selected yet.")
+		self.menu_show_text.set("Task Disabled.")
+		self.menu_show_btn.config(state='disabled')
+		self.menu_show_config.set(0)
+		self.menu_global_text.set("Task Disabled.")
+		self.menu_global_btn.config(state='disabled')
+		self.menu_global_config.set(0)
+		self.menu_device_reload.config(state='disabled', bootstyle='secondary')
+		self.menu_show_reload.config(state='disabled', bootstyle='secondary')
+		self.menu_global_reload.config(state='disabled', bootstyle='secondary')
+		self.menu_port_reload.config(state='disabled', bootstyle='secondary')
+		self.menu_port_text.set("Task Disabled.")
+		self.menu_port_btn.config(state='disabled')
+		self.menu_port_config.set(0)
 		self.global_config: list = []
 		self.global_path.set("No Global configuration file selected yet.")
 		self.port_config: list = []
@@ -278,6 +381,10 @@ class Main(ttk.Frame):
 		self.menu_error_label.config(foreground="orange")
 		self.menu_check_btn.config(state='disabled')
 		self.menu_check_config.set(0)
+		self.menu_device_preview.config(state='disabled')
+		self.menu_show_preview.config(state='disabled')
+		self.menu_global_preview.config(state='disabled')
+		self.menu_port_preview.config(state='disabled')
 
 	def build_save_results(self, frame: ttk.Frame, results: list) -> None:
 		def place_objects(frame: ttk.Frame, entry: list, style: str, row: float) -> None:
@@ -303,7 +410,7 @@ class Main(ttk.Frame):
 			self.widgets.append(_)
 			_.place(relx=self.title_placement[index], rely=row)
 		for index, entry in enumerate(results):
-			row += 0.025
+			row += 0.0255
 			if (index % 2) == 0:
 				place_objects(frame, entry, "inverse-secondary", row)
 			else:
@@ -342,7 +449,7 @@ class Main(ttk.Frame):
 			self.widgets.append(_)
 			_.place(relx=self.title_placement[index], rely=row)
 		for index, entry in enumerate(results):
-			row += 0.025
+			row += 0.0255
 			if (index % 2) == 0:
 				place_objects(frame, entry, "inverse-secondary", row)
 			else:
@@ -445,46 +552,50 @@ class Main(ttk.Frame):
 			return out 
 		returnResults: list = []
 		today: str = datetime.now().strftime("%d-%m-%Y_%H-%M")
-		with ThreadPoolExecutor() as executor:
-			if operation == "check":
-				filename: str = f"Check_Configurations_{today}.csv"
-				with open(join(self.check_config_dir, filename), "w") as w:
-					for device in results:
-						cmd_found: list = []
-						if not "Error" in device[2][0]:
-							show_run: str = device[2][0].replace("show run","").strip()
-							interfaces: list = findall(r"(interface [A-Z].+[\S\n ]+?!)", show_run)
-							for check in self.check_cmd:
-								tmpint: list = []
-								found: bool = False
-								for interface in interfaces:
-									if check.lower() in interface.lower():
-										i: str = interface.splitlines()[0].split(" ")[1]
-										for key, value in self.shorten_int.items():
-											if i.startswith(key):
-												i: str = i.replace(key,value)
-										tmpint.append(i)
-								if tmpint:
-									found: bool = True
-									tmpstr: str = ",".join(tmpint)
-									cmd_found.append(f"OK ({tmpstr})")
-									continue
-								for line in show_run.splitlines():
-									if check.lower() in line.lower():
-										cmd_found.append(f"OK ({line.strip()})")
+		try:
+			with ThreadPoolExecutor() as executor:
+				if operation == "check":
+					filename: str = f"Check_Configurations_{today}.csv"
+					with open(join(self.check_config_dir, filename), "w") as w:
+						for device in results:
+							cmd_found: list = []
+							if not "Error" in device[2][0]:
+								show_run: str = device[2][0].replace("show run","").strip()
+								interfaces: list = findall(r"(interface [A-Z].+[\S\n ]+?!)", show_run)
+								for check in self.check_cmd:
+									tmpint: list = []
+									found: bool = False
+									for interface in interfaces:
+										if check.lower() in interface.lower():
+											i: str = interface.splitlines()[0].split(" ")[1]
+											for key, value in self.shorten_int.items():
+												if i.startswith(key):
+													i: str = i.replace(key,value)
+											tmpint.append(i)
+									if tmpint:
 										found: bool = True
-								if not found:
-									cmd_found.append(f"NOT FOUND ({check})")
-						else: cmd_found.append(search(r"Error:\s(.+?)(\s\[ SKIPPED \]|\n|$)", device[2][0]).group(1))
-						await self.loop.run_in_executor(executor, w.write, f"{device[0]};{device[1].rstrip('#')};{';'.join(cmd_found)}\n")
-						returnResults.append([device[0], device[1].rstrip("#"), cmd_found, join(self.check_config_dir, filename)])
-			else:
-				for device in results:
-					filename: str = f"{device[0]}_{normalizefilename(device[1])}_{today}.txt"
-					with open(join(self.show_config_dir, filename), "w") as w:
-						for command in device[2]:
-							await self.loop.run_in_executor(executor, w.write, f"{command}\n\n")
-					returnResults.append([device[0], device[1].rstrip("#"), device[2], join(self.show_config_dir, filename)])
+										tmpstr: str = ",".join(tmpint)
+										cmd_found.append(f"OK ({tmpstr})")
+										continue
+									for line in show_run.splitlines():
+										if check.lower() in line.lower():
+											cmd_found.append(f"OK ({line.strip()})")
+											found: bool = True
+									if not found:
+										cmd_found.append(f"NOT FOUND ({check})")
+							else: cmd_found.append(search(r"Error:\s(.+?)(\s\[ SKIPPED \]|\n|$)", device[2][0]).group(1))
+							await self.loop.run_in_executor(executor, w.write, f"{device[0]};{device[1].rstrip('#')};{';'.join(cmd_found)}\n")
+							returnResults.append([device[0], device[1].rstrip("#"), cmd_found, join(self.check_config_dir, filename)])
+				else:
+					for device in results:
+						filename: str = f"{device[0]}_{normalizefilename(device[1])}_{today}.txt"
+						with open(join(self.show_config_dir, filename), "w") as w:
+							for command in device[2]:
+								await self.loop.run_in_executor(executor, w.write, f"{command}\n\n")
+						returnResults.append([device[0], device[1].rstrip("#"), device[2], join(self.show_config_dir, filename)])
+		except Exception as e:
+			self.menu_error_label.config(foreground='orange')
+			self.menu_error.set(f"Program Exception: {e}")
 		return(returnResults)
 
 	async def create_device_configurations(self, config_prechecks: list) -> tuple:
@@ -515,17 +626,19 @@ class Main(ttk.Frame):
 				filename: str = f"{device[0]}_{today}.cfg"
 				flash_copy: str = f"copy {flash}{filename} running-config\n\n"
 				with open(join(self.device_config_dir, filename), "w") as w:
-					if self.global_config:
-						for globalcfg in self.global_config:
-							await self.loop.run_in_executor(executor, w.write, f"{globalcfg}\n")
-					if self.port_config:
-						for interface in interfacelist:
-							if any(";; default ;;" in x.lower() for x in self.port_config):
-								await self.loop.run_in_executor(executor, w.write, f"default {interface.splitlines()[0]}\n")
-							await self.loop.run_in_executor(executor, w.write, f"{interface.splitlines()[0]}\n")
-							for portcfg in self.port_config:
-								if portcfg.lower() != ";; default ;;":
-									await self.loop.run_in_executor(executor, w.write, f"{portcfg}\n")
+					if self.menu_global_config.get():
+						if self.global_config:
+							for globalcfg in self.global_config:
+								await self.loop.run_in_executor(executor, w.write, f"{globalcfg}\n")
+					if self.menu_port_config.get():
+						if self.port_config:
+							for interface in interfacelist:
+								if any(";; default ;;" in x.lower() for x in self.port_config):
+									await self.loop.run_in_executor(executor, w.write, f"default {interface.splitlines()[0]}\n")
+								await self.loop.run_in_executor(executor, w.write, f"{interface.splitlines()[0]}\n")
+								for portcfg in self.port_config:
+									if portcfg.lower() != ";; default ;;":
+										await self.loop.run_in_executor(executor, w.write, f"{portcfg}\n")
 					await self.loop.run_in_executor(executor, w.write, f"end")
 				with open(join(self.device_config_dir, f"{device[0]}_{today}_backup.cfg"), "w") as w:
 					await self.loop.run_in_executor(executor, w.write, show_run)
@@ -545,67 +658,81 @@ class Main(ttk.Frame):
 		check_results: list = []
 		run: bool = False
 		sleep_time: float = 1.5
-		if self.show_cmd and self.check_cmd:
-			self.menu_error.set("Show & Check Commands: Execution started...")
-			show_results, check_results = await gather(Config.InitiateExecution(self.devices, self.show_cmd), Config.InitiateExecution(self.devices, ["terminal length 0", "show run"]),)
-			self.menu_error.set("Show & Check Commands: Execution completed!")
-			run: bool = True
-		if self.show_cmd:
-			if not show_results:
-				self.menu_error.set("Show Commands: Execution started...")
-				show_results: list = await Config.InitiateExecution(self.devices, self.show_cmd)
-				self.menu_error.set("Show Commands: Execution completed!")
+		if self.menu_show_config.get():
+			if self.show_cmd and self.check_cmd:
+				self.menu_error.set("Show & Check Commands: Execution started...")
+				show_results, check_results = await gather(Config.InitiateExecution(self.devices, self.show_cmd), Config.InitiateExecution(self.devices, ["terminal length 0", "show run"]),)
+				self.menu_error.set("Show & Check Commands: Execution completed!")
 				run: bool = True
-			if show_results:
-				save_show_results: list = await self.save_files(show_results)
-				self.main_show_config.set("Show Configurations:")
-				self.build_show_results(self.main_show, save_show_results)
-			else:
-				self.main_show_label.config(foreground='orange')
-				self.main_show_config.set(f"No results returned or operation failed, check the logs under: {self.current_dir}")
-		if self.check_cmd:
-			if not check_results:
-				self.menu_error.set("Check Commands: Execution started...")
-				check_results: list = await Config.InitiateExecution(self.devices, ["terminal length 0", "show run"])
-				self.menu_error.set("Check Commands: Execution completed!")
+			if self.show_cmd:
+				if not show_results:
+					self.menu_error.set("Show Commands: Execution started...")
+					show_results: list = await Config.InitiateExecution(self.devices, self.show_cmd)
+					self.menu_error.set("Show Commands: Execution completed!")
+					run: bool = True
+				if show_results:
+					save_show_results: list = await self.save_files(show_results)
+					self.main_show_config.set("Show Configurations:")
+					self.build_show_results(self.main_show, save_show_results)
+				else:
+					self.main_show_label.config(foreground='orange')
+					self.main_show_config.set(f"No results returned or operation failed, check the logs under: {self.current_dir}")
+			if self.check_cmd:
+				if not check_results:
+					self.menu_error.set("Check Commands: Execution started...")
+					check_results: list = await Config.InitiateExecution(self.devices, ["terminal length 0", "show run"])
+					self.menu_error.set("Check Commands: Execution completed!")
+					run: bool = True
+				if check_results:
+					save_check_results: list = await self.save_files(check_results, "check")
+					self.main_check_config.set("Check Configurations:")
+					self.build_check_results(self.main_check, save_check_results)
+				else:
+					self.main_check_label.config(foreground='orange')
+					self.main_check_config.set(f"No results returned or operation failed, check the logs under: {self.current_dir}")
+		else:
+			self.menu_error.set("Show/Check Task disabled, skipping...")
+			await sleep(sleep_time)
+		if self.menu_global_config.get() or self.menu_port_config.get():
+			if not self.menu_global_config.get():
+				self.menu_error.set("Global Task disabled, skipping...")
+				await sleep(sleep_time)
+			elif not self.menu_port_config.get():
+				self.menu_error.set("Port Task disabled, skipping...")
+				await sleep(sleep_time)
+			if self.global_config or self.port_config:
+				self.menu_error.set("Device configurations started...")
+				scp_ena_result: list = []; scp_dis_result: list = []
+				if run: await sleep(sleep_time)
+				self.config_prechecks: list = await Config.InitiateExecution(self.devices, ["terminal length 0", "show run", "dir all-filesystems | in (Directory of flash|Directory of bootflash)"])
+				reload_start, scp_ena, scp_transfer, copy, scp_dis, reload_cancel = await self.create_device_configurations(self.config_prechecks)
+				await sleep(sleep_time)
+				self.menu_error.set("Device configurations: setting reload in 30 mins...")
+				reload_start_result: list = await Config.InitiateExecution(reload_start)
+				if scp_ena:
+					await sleep(sleep_time)
+					self.menu_error.set(f"Device configurations: enabling SCP transfer...")
+					scp_ena_result: list = await Config.InitiateExecution(scp_ena)
+				await sleep(sleep_time)
+				self.menu_error.set("Device configurations: Starting SCP transfers...")
+				scp_transfer_result: list = await Config.InitiateScpTransfer(scp_transfer)
+				await sleep(sleep_time)
+				self.menu_error.set("Device configurations: copying config to running-config...")
+				copy_result: list = await Config.InitiateExecution(copy)
+				if scp_dis:
+					await sleep(sleep_time)
+					self.menu_error.set(f"Device configurations: disabling SCP transfer...")
+					scp_dis_result: list = await Config.InitiateExecution(scp_dis)
+				await sleep(sleep_time)
+				self.menu_error.set("Device configurations: cancelling reloads...")
+				reload_cancel_result: list = await Config.InitiateExecution(reload_cancel)
+				self.menu_error.set("Device configurations completed!")
 				run: bool = True
-			if check_results:
-				save_check_results: list = await self.save_files(check_results, "check")
-				self.main_check_config.set("Check Configurations:")
-				self.build_check_results(self.main_check, save_check_results)
-			else:
-				self.main_check_label.config(foreground='orange')
-				self.main_check_config.set(f"No results returned or operation failed, check the logs under: {self.current_dir}")
-		if self.global_config or self.port_config:
-			self.menu_error.set("Device configurations started...")
-			scp_ena_result: list = []; scp_dis_result: list = []
-			if run: await sleep(sleep_time)
-			self.config_prechecks: list = await Config.InitiateExecution(self.devices, ["terminal length 0", "show run", "dir all-filesystems | in (Directory of flash|Directory of bootflash)"])
-			reload_start, scp_ena, scp_transfer, copy, scp_dis, reload_cancel = await self.create_device_configurations(self.config_prechecks)
+				self.main_global_config.set("Device Configurations:")
+				self.build_device_results(self.main_global, reload_start_result, scp_ena_result, scp_transfer_result, copy_result, scp_dis_result, reload_cancel_result, self.config_prechecks)
+		else:
+			self.menu_error.set("Both Global & Port Task disabled, skipping...")
 			await sleep(sleep_time)
-			self.menu_error.set("Device configurations: setting reload in 30 mins...")
-			reload_start_result: list = await Config.InitiateExecution(reload_start)
-			if scp_ena:
-				await sleep(sleep_time)
-				self.menu_error.set(f"Device configurations: enabling SCP transfer...")
-				scp_ena_result: list = await Config.InitiateExecution(scp_ena)
-			await sleep(sleep_time)
-			self.menu_error.set("Device configurations: Starting SCP transfers...")
-			scp_transfer_result: list = await Config.InitiateScpTransfer(scp_transfer)
-			await sleep(sleep_time)
-			self.menu_error.set("Device configurations: copying config to running-config...")
-			copy_result: list = await Config.InitiateExecution(copy)
-			if scp_dis:
-				await sleep(sleep_time)
-				self.menu_error.set(f"Device configurations: disabling SCP transfer...")
-				scp_dis_result: list = await Config.InitiateExecution(scp_dis)
-			await sleep(sleep_time)
-			self.menu_error.set("Device configurations: cancelling reloads...")
-			reload_cancel_result: list = await Config.InitiateExecution(reload_cancel)
-			self.menu_error.set("Device configurations completed!")
-			run: bool = True
-			self.main_global_config.set("Device Configurations:")
-			self.build_device_results(self.main_global, reload_start_result, scp_ena_result, scp_transfer_result, copy_result, scp_dis_result, reload_cancel_result, self.config_prechecks)
 		if self.menu_check_config.get():
 			if run: await sleep(sleep_time)
 			self.menu_error.set("Saving configurations (write memory) started...")
@@ -667,9 +794,16 @@ class Main(ttk.Frame):
 		self.device_total = ttk.StringVar(value='Total devices: 0')
 		ttk.Label(menu, text='Select devices to execute on:', font='Calibri 18 bold').place(relx=0.02, rely=0.02)
 		ttk.Label(menu, text='Loaded File:', font='Calibri 12').place(relx=0.02, rely=0.10)
+		self.menu_device_reload = ttk.Button(menu, image=self.reload_file_icon, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_devices(reload=True), takefocus=0)
+		self.menu_device_reload.place(relx=0.27, rely=0.10)
+		self.menu_device_reload.config(state='disabled')
+		self.menu_device_preview = ttk.Button(menu, image=self.preview_folder, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_file(self.device_path.get()), takefocus=0)
+		self.menu_device_preview.place(relx=0.225, rely=0.10)
+		self.menu_device_preview.config(state='disabled')
+		self.device_reload_counter = ttk.IntVar(value=0)
 		ttk.Label(menu, text='Device preview (First 5 devices):', font='Calibri 12').place(relx=0.02, rely=0.14)
-		ttk.Button(menu, text='Select Devices...', bootstyle="light", command=lambda:self.open_devices()).place(relx=0.02, rely=0.06)
-		ttk.Button(menu, text='Device Help', bootstyle="light", command=lambda:self.msgBox(self.device_help)).place(relx=0.32, rely=0.06)
+		ttk.Button(menu, text='Select Devices...', bootstyle="light", command=lambda:self.open_devices(), padding=2).place(relx=0.02, rely=0.06)
+		ttk.Button(menu, text='Device Help', bootstyle="light", command=lambda:self.msgBox(self.device_help), padding=2).place(relx=0.32, rely=0.06)
 		ttk.Label(menu, textvariable=self.device_total, font='Calibri 11').place(relx=0.80, rely=0.06)
 		self.menu_device1 = ttk.Entry(menu, state='readonly', textvariable=self.device_path)
 		self.menu_device1.place(relx=0.32, rely=0.10, relwidth=0.65)
@@ -693,9 +827,21 @@ class Main(ttk.Frame):
 		# Show/Check config
 		self.show_check_path = ttk.StringVar(value='No Show/Check commands file selected yet.')
 		ttk.Label(menu, text='Show Configuration/Check Commands (Optional):', font='Calibri 18 bold').place(relx=0.02, rely=0.35)
-		ttk.Button(menu, text='Select Show/Check Commands...', bootstyle="light", command=lambda:self.open_show_check()).place(relx=0.02, rely=0.39)
-		ttk.Button(menu, text='Show/Check Help', bootstyle="light", command=lambda:self.msgBox(self.show_check_help)).place(relx=0.32, rely=0.39)
+		self.menu_show_config = ttk.IntVar(value=0)
+		self.menu_show_text = ttk.StringVar(value="Task Disabled.")
+		self.menu_show_btn = ttk.Checkbutton(menu, textvariable=self.menu_show_text, style='Roundtoggle.Toolbutton', variable=self.menu_show_config, onvalue=1, offvalue=0)
+		self.menu_show_btn.place(relx=0.80, rely=0.35)
+		self.menu_show_btn.config(state='disabled')
+		ttk.Button(menu, text='Select Show/Check Commands...', bootstyle="light", command=lambda:self.open_show_check(), padding=2).place(relx=0.02, rely=0.39)
+		ttk.Button(menu, text='Show/Check Help', bootstyle="light", command=lambda:self.msgBox(self.show_check_help), padding=2).place(relx=0.32, rely=0.39)
 		ttk.Label(menu, text='Loaded File:', font='Calibri 12').place(relx=0.02, rely=0.43)
+		self.menu_show_reload = ttk.Button(menu, image=self.reload_file_icon, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_show_check(reload=True), takefocus=0)
+		self.menu_show_reload.place(relx=0.27, rely=0.43)
+		self.menu_show_reload.config(state='disabled')
+		self.menu_show_preview = ttk.Button(menu, image=self.preview_folder, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_file(self.show_check_path.get()), takefocus=0)
+		self.menu_show_preview.place(relx=0.225, rely=0.43)
+		self.menu_show_preview.config(state='disabled')
+		self.show_reload_counter = ttk.IntVar(value=0)
 		self.menu_show = ttk.Entry(menu, state='readonly', textvariable=self.show_check_path)
 		self.menu_show.place(relx=0.32, rely=0.43, relwidth=0.65)
 		# Separator
@@ -703,9 +849,21 @@ class Main(ttk.Frame):
 		# Global Configuration
 		self.global_path = ttk.StringVar(value='No Global configuration file selected yet.')
 		ttk.Label(menu, text='Global Configuration (Optional):', font='Calibri 18 bold').place(relx=0.02, rely=0.49)
-		ttk.Button(menu, text='Select Global Config...', bootstyle="light", command=lambda:self.open_global()).place(relx=0.02, rely=0.53)
-		ttk.Button(menu, text='Global Config Help', bootstyle="light", command=lambda:self.msgBox(self.global_config_help)).place(relx=0.32, rely=0.53)
+		self.menu_global_config = ttk.IntVar(value=0)
+		self.menu_global_text = ttk.StringVar(value="Task Disabled.")
+		self.menu_global_btn = ttk.Checkbutton(menu, textvariable=self.menu_global_text, style='Roundtoggle.Toolbutton', variable=self.menu_global_config, onvalue=1, offvalue=0)
+		self.menu_global_btn.place(relx=0.80, rely=0.49)
+		self.menu_global_btn.config(state='disabled')
+		ttk.Button(menu, text='Select Global Config...', bootstyle="light", command=lambda:self.open_global(), padding=2).place(relx=0.02, rely=0.53)
+		ttk.Button(menu, text='Global Config Help', bootstyle="light", command=lambda:self.msgBox(self.global_config_help), padding=2).place(relx=0.32, rely=0.53)
 		ttk.Label(menu, text='Loaded File:', font='Calibri 12').place(relx=0.02, rely=0.57)
+		self.menu_global_reload = ttk.Button(menu, image=self.reload_file_icon, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_global(reload=True), takefocus=0)
+		self.menu_global_reload.place(relx=0.27, rely=0.57)
+		self.menu_global_reload.config(state='disabled')
+		self.menu_global_preview = ttk.Button(menu, image=self.preview_folder, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_file(self.global_path.get()), takefocus=0)
+		self.menu_global_preview.place(relx=0.225, rely=0.57)
+		self.menu_global_preview.config(state='disabled')
+		self.global_reload_counter = ttk.IntVar(value=0)
 		self.menu_global = ttk.Entry(menu, state='readonly', textvariable=self.global_path)
 		self.menu_global.place(relx=0.32, rely=0.57, relwidth=0.65)
 		# Separator
@@ -713,9 +871,21 @@ class Main(ttk.Frame):
 		# Port Configuration
 		self.port_path = ttk.StringVar(value='No Port configuration file selected yet.')
 		ttk.Label(menu, text='Port Configuration (Optional):', font='Calibri 18 bold').place(relx=0.02, rely=0.63)
-		ttk.Button(menu, text='Select Port Config...', bootstyle="light", command=lambda:self.open_port()).place(relx=0.02, rely=0.67)
-		ttk.Button(menu, text='Port Config Help', bootstyle="light", command=lambda:self.msgBox(self.port_config_help)).place(relx=0.32, rely=0.67)
+		self.menu_port_config = ttk.IntVar(value=0)
+		self.menu_port_text = ttk.StringVar(value="Task Disabled.")
+		self.menu_port_btn = ttk.Checkbutton(menu, textvariable=self.menu_port_text, style='Roundtoggle.Toolbutton', variable=self.menu_port_config, onvalue=1, offvalue=0)
+		self.menu_port_btn.place(relx=0.80, rely=0.63)
+		self.menu_port_btn.config(state='disabled')
+		ttk.Button(menu, text='Select Port Config...', bootstyle="light", command=lambda:self.open_port(), padding=2).place(relx=0.02, rely=0.67)
+		ttk.Button(menu, text='Port Config Help', bootstyle="light", command=lambda:self.msgBox(self.port_config_help), padding=2).place(relx=0.32, rely=0.67)
 		ttk.Label(menu, text='Loaded File:', font='Calibri 12').place(relx=0.02, rely=0.71)
+		self.menu_port_reload = ttk.Button(menu, image=self.reload_file_icon, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_port(reload=True), takefocus=0)
+		self.menu_port_reload.place(relx=0.27, rely=0.71)
+		self.menu_port_reload.config(state='disabled')
+		self.menu_port_preview = ttk.Button(menu, image=self.preview_folder, compound='center', bootstyle='secondary-outline', padding=1, command=lambda: self.open_file(self.port_path.get()), takefocus=0)
+		self.menu_port_preview.place(relx=0.225, rely=0.71)
+		self.menu_port_preview.config(state='disabled')
+		self.port_reload_counter = ttk.IntVar(value=0)
 		self.menu_port = ttk.Entry(menu, state='readonly', textvariable=self.port_path)
 		self.menu_port.place(relx=0.32, rely=0.71, relwidth=0.65)
 		# Separator
@@ -727,8 +897,7 @@ class Main(ttk.Frame):
 		# Separator
 		ttk.Separator(menu).place(relx=0, rely=0.925, relwidth=1)
 		# Execute
-		self.menu_check_config = ttk.IntVar()
-		self.menu_check_config.set(0)
+		self.menu_check_config = ttk.IntVar(value=0)
 		self.menu_check_btn = ttk.Checkbutton(menu, text='Save device configuration.', style='Roundtoggle.Toolbutton', variable=self.menu_check_config, onvalue=1, offvalue=0)
 		self.menu_check_btn.place(relx=0.02, rely=0.955)
 		self.menu_check_btn.config(state='disabled')
