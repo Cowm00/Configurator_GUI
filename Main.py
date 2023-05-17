@@ -94,7 +94,7 @@ class Main(ttk.Frame):
 			from os import startfile
 			startfile(path)
 		else:
-			opener = "open" if platform == "darwin" else "xdg-open"
+			opener: str = "open" if platform == "darwin" else "xdg-open"
 			Popen([opener, path])
 
 	def open_devices(self, reload: bool = False) -> None:
@@ -121,7 +121,7 @@ class Main(ttk.Frame):
 					self.menu_device_reload.config(state='normal')
 					self.menu_device_preview.config(state='normal')
 				else:
-					path_file = path.split("/")[-1]
+					path_file: str = path.split("/")[-1]
 					self.device_path.set(f"No devices found in file: {path_file}")
 					self.device_preview.set(f"No devices found in file: {path_file}")
 					self.menu_device_reload.config(state='disabled', bootstyle='secondary')
@@ -189,7 +189,7 @@ class Main(ttk.Frame):
 				self.menu_show_preview.config(state='normal')
 				self.menu_show_config.set(1)
 			else:
-				path_file = path.split("/")[-1]
+				path_file: str = path.split("/")[-1]
 				self.show_check_path.set(f"No Show/Check commands (;; SHOW ;; or ;; CHECK ;;) found in file: {path_file}")
 				self.menu_show.config(foreground='orange')
 				self.menu_show_text.set("Task Disabled.")
@@ -231,7 +231,7 @@ class Main(ttk.Frame):
 				self.menu_global_preview.config(state='normal')
 				self.menu_global_config.set(1)
 			else:
-				path_file = path.split("/")[-1]
+				path_file: str = path.split("/")[-1]
 				self.global_path.set(f"No Global Configurations found in file: {path_file}")
 				self.menu_global_text.set("Task Disabled.")
 				self.menu_global_btn.config(state='disabled')
@@ -265,7 +265,7 @@ class Main(ttk.Frame):
 			self.port_exclude: list = []
 			with open(path) as r:
 				if not ";; config ;;" in r.read().lower():
-					path_file = path.split("/")[-1]
+					path_file: str = path.split("/")[-1]
 					self.port_path.set(f"No Port Configuration commands (;; CONFIG ;;) found in file: {path_file}")
 					self.menu_port_text.set("Task Disabled.")
 					self.menu_port_btn.config(state='disabled')
@@ -325,7 +325,7 @@ class Main(ttk.Frame):
 				self.menu_port_preview.config(state='normal')
 				self.menu_port_config.set(1)
 			else:
-				path_file = path.split("/")[-1]
+				path_file: str = path.split("/")[-1]
 				self.port_path.set(f"No Port Configuration commands found in file: {path_file}")
 				self.menu_port_text.set("Task Disabled.")
 				self.menu_port_btn.config(state='disabled')
@@ -559,6 +559,7 @@ class Main(ttk.Frame):
 					with open(join(self.check_config_dir, filename), "w") as w:
 						for device in results:
 							cmd_found: list = []
+							cmd_gui: list = []
 							if not "Error" in device[2][0]:
 								show_run: str = device[2][0].replace("show run","").strip()
 								interfaces: list = findall(r"(interface [A-Z].+[\S\n ]+?!)", show_run)
@@ -573,19 +574,26 @@ class Main(ttk.Frame):
 													i: str = i.replace(key,value)
 											tmpint.append(i)
 									if tmpint:
-										found: bool = True
 										tmpstr: str = ",".join(tmpint)
 										cmd_found.append(f"OK ({tmpstr})")
+										cmd_gui.append(f"OK ({tmpstr})")
 										continue
 									for line in show_run.splitlines():
 										if check.lower() in line.lower():
 											cmd_found.append(f"OK ({line.strip()})")
 											found: bool = True
+									for line in show_run.splitlines():
+										if check.lower() in line.lower():
+											cmd_gui.append(f"OK ({line.strip()})")
+											break
 									if not found:
 										cmd_found.append(f"NOT FOUND ({check})")
+										cmd_gui.append(f"NOT FOUND ({check})")
 							else: cmd_found.append(search(r"Error:\s(.+?)(\s\[ SKIPPED \]|\n|$)", device[2][0]).group(1))
 							await self.loop.run_in_executor(executor, w.write, f"{device[0]};{device[1].rstrip('#')};{';'.join(cmd_found)}\n")
-							returnResults.append([device[0], device[1].rstrip("#"), cmd_found, join(self.check_config_dir, filename)])
+							if len(cmd_found) > len(self.check_cmd):
+								returnResults.append([device[0], device[1].rstrip("#"), cmd_gui, join(self.check_config_dir, filename)])
+							else: returnResults.append([device[0], device[1].rstrip("#"), cmd_found, join(self.check_config_dir, filename)])
 				else:
 					for device in results:
 						filename: str = f"{device[0]}_{normalizefilename(device[1])}_{today}.txt"
@@ -776,7 +784,7 @@ class Main(ttk.Frame):
 		else:
 			self.menu_error.set("You must select at least one configuration option: Show/Check, Global or Port.")
 
-	def create_menu(self):
+	def create_menu(self) -> None:
 		# Init Notebook
 		my_notebook = ttk.Notebook(self)
 		my_notebook.place(x=4, y=0, relwidth=0.395, relheight=0.994)
@@ -906,7 +914,7 @@ class Main(ttk.Frame):
 		# Add tabs
 		my_notebook.add(menu)
 
-	def create_main(self):
+	def create_main(self) -> None:
 		my_notebook = ttk.Notebook(self)
 		my_notebook.place(relx=0.4, y=0, relwidth=0.598, relheight=0.994)
 		# Init main Frame
