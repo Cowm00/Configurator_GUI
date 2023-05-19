@@ -16,6 +16,7 @@ from itertools import chain
 from datetime import datetime
 from concurrent.futures import ThreadPoolExecutor
 from ScrollableFrame import ScrollableFrame
+from CredentialHandler import CredentialHandler
 
 class Main(ttk.Frame):
 	def __init__(self, parent):
@@ -65,6 +66,7 @@ class Main(ttk.Frame):
 		self.widgets: list = []
 		self.title_width: list = [20,40,84,10]
 		self.title_placement: list = [0.01,0.139,0.391,0.914]
+		self.credHandler = CredentialHandler(join(self.current_dir, "Configurator_GUI.db"))
 		self.create_menu()
 		self.create_main()
 
@@ -72,6 +74,17 @@ class Main(ttk.Frame):
 		if action == "Exit": self.quit()
 		if action == "About": self.msgBox(self.about_help)
 		if action == "Help": self.msgBox(self.help_help)
+
+	def get_creds(self) -> None:
+		device_path, username, password = self.credHandler.load_creds()
+		if device_path and username and password:
+			self.reset_menu()
+			self.open_devices(loaded=device_path)
+			self.menu_username.delete(0,"end")
+			self.menu_username.insert(0,username)
+			self.menu_password.delete(0,"end")
+			self.menu_password.insert(0,password)
+		else: self.menu_error.set("No credential session found.")
 
 	def msgBox(self, filename: str) -> None:
 		win = ttk.Toplevel(title=filename, resizable=(False,False))
@@ -97,7 +110,7 @@ class Main(ttk.Frame):
 			opener: str = "open" if platform == "darwin" else "xdg-open"
 			Popen([opener, path])
 
-	def open_devices(self, reload: bool = False) -> None:
+	def open_devices(self, reload: bool = False, loaded: str = "") -> None:
 		if reload and ("\\" in self.device_path.get() or "/" in self.device_path.get()):
 			path: str = self.device_path.get()
 			if (self.device_reload_counter.get() % 2) == 0:
@@ -105,7 +118,8 @@ class Main(ttk.Frame):
 			else: self.menu_device_reload.config(bootstyle='info')
 			self.device_reload_counter.set(self.device_reload_counter.get()+1)
 		else:
-			path: str = askopenfilename(title='Select Device list')
+			if loaded: path: str = loaded
+			else: path: str = askopenfilename(title='Select Device list')
 			self.menu_device_reload.config(bootstyle='secondary')
 		if path:
 			self.devices: list = []
@@ -698,9 +712,6 @@ class Main(ttk.Frame):
 				else:
 					self.main_check_label.config(foreground='orange')
 					self.main_check_config.set(f"No results returned or operation failed, check the logs under: {self.current_dir}")
-		else:
-			self.menu_error.set("Show/Check Task disabled, skipping...")
-			await sleep(sleep_time)
 		if self.menu_global_config.get() or self.menu_port_config.get():
 			if not self.menu_global_config.get():
 				self.menu_error.set("Global Task disabled, skipping...")
@@ -738,9 +749,6 @@ class Main(ttk.Frame):
 				run: bool = True
 				self.main_global_config.set("Device Configurations:")
 				self.build_device_results(self.main_global, reload_start_result, scp_ena_result, scp_transfer_result, copy_result, scp_dis_result, reload_cancel_result, self.config_prechecks)
-		else:
-			self.menu_error.set("Both Global & Port Task disabled, skipping...")
-			await sleep(sleep_time)
 		if self.menu_check_config.get():
 			if run: await sleep(sleep_time)
 			self.menu_error.set("Saving configurations (write memory) started...")
@@ -780,6 +788,7 @@ class Main(ttk.Frame):
 				self.main_global_config.set("No Device Configurations to display.")
 				self.main_save_config.set("No Configurations have been saved yet.")
 				self.widgets: list = []
+			self.credHandler.save_creds(self.device_path.get(), self.menu_username.get(), self.menu_password.get())
 			Thread(target=self._asyncio_thread, name="tkinter_thread").start()
 		else:
 			self.menu_error.set("You must select at least one configuration option: Show/Check, Global or Port.")
@@ -898,6 +907,11 @@ class Main(ttk.Frame):
 		self.menu_port.place(relx=0.32, rely=0.71, relwidth=0.65)
 		# Separator
 		ttk.Separator(menu).place(relx=0, rely=0.76, relwidth=1)
+		# Load previous session
+		ttk.Label(menu, text='Load previous session (devices, username and password):', font='Calibri 12').place(relx=0.02, rely=0.77)
+		ttk.Button(menu, text='Load', bootstyle="success", command=lambda:self.get_creds()).place(relx=0.835, rely=0.77)
+		# Separator
+		ttk.Separator(menu).place(relx=0, rely=0.81, relwidth=1)
 		# Error messaging
 		self.menu_error = ttk.StringVar(value='')
 		self.menu_error_label = ttk.Label(menu, textvariable=self.menu_error, font='Calibri 12 bold', foreground='orange')
